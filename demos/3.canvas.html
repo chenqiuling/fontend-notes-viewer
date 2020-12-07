@@ -1,0 +1,582 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Canvas学习笔记</title>
+  <style>
+    canvas {
+      border: 1px solid #d3d3d3;
+      margin-right: 10px;
+      margin-bottom: 20px;
+    }
+  </style>
+</head>
+<body>
+<!--
+  笔记参考：
+  http://caibaojian.com/canvas
+  菜鸟教程：http://www.runoob.com
+-->
+
+<canvas id="my-canvas" width="750" height="1200">
+  当前浏览器不支持canvas!
+</canvas>
+<div style="display: inline-block; vertical-align: top;">
+  <h5>根据起/终角和绘制圆弧</h5>
+  <img src="http://www.runoob.com/wp-content/uploads/2013/11/img_arc.gif" alt="">
+  <h5>根据切点绘制圆弧</h5>
+  <img src="http://www.runoob.com/wp-content/uploads/2013/11/img_canvas_arcto.png" alt="">
+  <h5>相关工具：</h5>
+  <p>
+    <a href="http://blogs.sitepointstatic.com/examples/tech/canvas-curves/quadratic-curve.html">二次贝塞尔曲线代码生成工具</a>
+  </p>
+  <p>
+    <a href="http://blogs.sitepointstatic.com/examples/tech/canvas-curves/bezier-curve.html">三次贝塞尔曲线代码生成工具</a>
+  </p>
+  <h5>context.globalCompositeOperation取值对应效果：</h5>
+  <div id="globalCompositeOperation"></div>
+</div>
+<script>
+  window.onload = function () {
+    // 1. 获取画布，画布默认是透明的
+    var canvas = document.getElementById('my-canvas');
+
+    // 2. 获取画笔
+    var context = canvas.getContext('2d');
+
+    // 3. 默认情况下，每次调用绘制方法，都会在原基础上重绘画布上的所有状态，即覆盖绘制，
+    // 若要避免重复绘制之前的状态，可以在新绘制前调用beginPath()
+    context.beginPath();
+
+
+    // 4. 移动画笔至绘制起点，例如x = 50px, y = 50px
+    // 笛卡尔坐标系，左上角为原点，右x+，下y+
+    context.moveTo(50, 50);
+
+    // 5. 确定绘制终点
+    context.lineTo(250, 50);
+    context.lineTo(250, 150);
+    context.lineTo(50, 150);
+
+    // 绘制最后一笔使图像闭合，或调用闭合方法closePath()
+    // context.lineTo(150,50);
+    // 6. 调用closePath()闭合图形，非闭合图形时可选择不调用
+    context.closePath();
+
+    // 7. 选择画笔（描边粗细，颜色等）或油漆桶颜色（填充）
+
+    // 描边粗细，默认为1px
+    context.lineWidth = 5;
+    // 描边端点，butt（默认值，平直端点），round（描边宽为直径的圆滑端点），square（以描边宽为长、以一半描边宽为宽的矩形端点）
+    // 注意：round 和 square 都会使得描边被增长
+    context.lineCap = 'round';
+    // 设置两条描边的拐角（连接角），miter（默认值，尖角），bevel（斜角），round（圆角）
+    context.lineJoin = 'round';
+    // 注意：取值miter时，可设置miterLimit的值，正数，规定最大斜接长度，默认为10。如果斜接长度超过 miterLimit 的值，拐角效果为 bevel
+    // context.miterLimit = 5;
+
+    // 描边可选择颜色、渐变（线性或径向）、图案
+    // 描边颜色，默认为黑色
+    context.strokeStyle = '#000';
+
+    // 填充可选择颜色、渐变（线性或径向）、图案，观察发现: 填充会覆盖1/2*lineWidth的描边
+    // 填充颜色，默认为黑色
+    // context.fillStyle = '#aaa';
+
+    // 定义渐变
+    // 注意：渐变线的起点和终点、颜色的断点不一定要在图像内。但是如果图像的范围大于渐变线，那么在渐变线范围之外，就会自动填充离端点最近的断点的颜色
+    // 添加线性渐变，createLinearGradient(startX, startY, endX, endY)
+    var grad = context.createLinearGradient(0, 0, 500, 0);
+
+    // 添加径向渐变，createRadialGradient(startX, startY, r1, endX, endY, r2)
+    // var grad = context.createRadialGradient(200, 200, 100, 300, 300, 300);
+
+    // 添加渐变线端点的颜色，addColorStop(stop, color)，stop取值范围0~1的浮点数，表示断点到起点的距离占渐变长度的比例
+    grad.addColorStop(0, '#f00');
+    grad.addColorStop(0.5, '#ff0');
+    grad.addColorStop(1, '#fa0');
+    context.fillStyle = grad;
+
+    // 定义图案，createPattern(img, repeat-style)，repeat-style取值repeat、repeat-x、repeat-y、no-repeat
+    var img = new Image();
+    img.src = 'https://www.baidu.com/favicon.ico';
+    // 注意：需待图片加载完成后再填充，图片从坐标原点（左上角）按原图大小开始显示，如果图片过小且不重复填充，此时若填充容器不在图片显示范围内则看不到填充效果
+    img.onload = function () {
+      context.save();
+      var pattern = context.createPattern(img, 'repeat');
+      context.fillStyle = pattern;
+      context.fillRect(300, 50, 200, 100);
+      context.restore();
+    }
+
+    // 8. 调用绘制方法（描边 stroke 或填充 fill）
+    context.stroke();
+    // 只有线条交叉形成锐角（0°< α< 90°），直角（α= 90°），钝角（90°< α< 180°）时填充有效
+    context.fill();
+
+    context.beginPath();
+    context.arc(100, 300, 50, 0, 1.5 * Math.PI);
+    context.stroke();
+
+    /** Canvas API封装的常用方法还有：
+     * context.rect(x, y, width, height); 定义矩形，但未绘制
+     * context.fillRect(x, y, width, height); 绘制填充矩形
+     * context.strokeRect(x, y, width, height); 绘制描边矩形
+     * 高级路径：
+     * context.arc(x, y, radius, startAngle, endAngle, anticlockwise); 定义圆弧，但未绘制
+     * @params {
+     *   (x, y): 圆心点
+     *   radius: 半径
+     *   startAngle, endAngle:
+     *      弧度值，正值，起始角为时钟三点方向:
+     *      中心：arc(100, 75, 50, 0*Math.PI, 1.5*Math.PI)
+     *      起始角：arc(100, 75, 50, 0, 1.5*Math.PI)
+     *      结束角：arc(100, 75, 50, 0*Math.PI, 1.5*Math.PI)
+     *                    1.5*Math.PI
+     *                         |
+     *                         |
+     *      1*Math.PI -----0*Math.PI-----0
+     *                         |
+     *                         |
+     *                    0.5*Math.PI
+     *   anticlockwise：绘图方向，false为顺时针，true为逆时针，默认为false
+     * }
+     *
+     * context.arcTo(x1, y1, x2, y2, radius); 根据切点定义圆弧，但未绘制
+     * @params {
+     *   (x1, y1)：两条切线的交点
+     *   (x2, y2)：切线2上任意一点
+     *   radius: 半径
+     *   切点1：圆弧的起点，moveTo()中定义的起点与点(x1, y1)确定切线1
+     *   切点2：圆弧的终点，点(x1, y1)与点(x2, y2)确定切线2
+     *   注意：圆弧的起点和终点是指圆弧所在圆与两条切线相交形成的切点，而实际绘制出来的圆弧的起终点会分别与moveTo()、(x2, y2)连接
+     * }
+     * 通常与moveTo()、lineTo()结合使用
+     *
+     * 起始点，控制点，终止点可确定一条曲线，n阶贝塞尔曲线就有n-1个控制点
+     * context.quadraticCurveTo(cpx, cpy, x, y); 二次贝塞尔曲线
+     * @params {
+     *   (cpx, cpy)：控制点
+     *   (x, y)：终止点
+     * }
+     * 通常与moveTo()、lineTo()结合使用
+     *
+     * context.bezierCurveTo(cp1x, cp1y, cp2x, cp2y, x, y); 三次贝塞尔曲线
+     * @params {
+     *   (cp1x, cp1y)：控制点1
+     *   (cp2x, cp2y)：控制点2
+     *   (x, y)：终止点
+     * }
+     * 通常与moveTo()、lineTo()结合使用
+     *
+     * context.translate(x,y); 平移变换
+     * 注意：表面上看是图形的移动，实际上是将整个坐标系相对于画布进行了移动，即平移后坐标系原点实际在相对画布的点(x, y)处
+     * 为了保持坐标系原点始终位于画布最左上角，在平移前需调用context.save()，平移后再调用context.restore()，否则会影响之后绘制的所有图形
+     *
+     * context.rotate(deg); 旋转变换
+     * 默认是围绕坐标原点进行旋转，如果需要切换旋转基点，可以结合translate()使用
+     * 多次旋转，后一次旋转是在上一次旋转的基础上进行的旋转，
+     * 所以为了重置旋转的起始角和坐标系原点，在旋转前需调用context.save()，旋转后再调用context.restore()
+     *
+     * context.scale(sx, sy); 缩放变换
+     * @params {
+     *   sx：水平缩放倍数，小于1缩小，大于1放大
+     *   sy：垂直缩放倍数，小于1缩小，大于1放大
+     * }
+     * 注意：不仅会缩放图形，描边的粗细和坐标系都会被缩放，即缩放后的x, y是原来的x, y的n倍
+     *
+     * context.transform(a,b,c,d,e,f); 在上一个（如果有上一个）矩阵基础上创建了一个新的变换矩阵
+     * @params {
+     *   a: 水平缩放 1
+     *   b：水平倾斜 0
+     *   c：垂直倾斜 0
+     *   d：垂直缩放 1
+     *   e：水平位移 0
+     *   f：垂直位移 0
+     * }
+     * 矩阵:          ->    单位矩阵：
+     * | a  c  e |          | 1  0  0 |
+     * | b  d  f |    ->    | 0  1  0 |   ->    即默认缩放均为1
+     * | 0  0  1 |          | 0  0  1 |
+     *
+     * context.setTransform(a,b,c,d,e,f); 重置并创建一个变换矩阵
+     * 参数同transform();区别在于：setTransform会重置前一个变换矩阵然后构建新的矩阵，而transform不会影响上一个变换矩阵
+     *
+     *
+     *
+     * 文本：类似css
+     * context.font = "[font-style] [font-variant] [font-weight] [font-size/line-height] [font-family]";
+     * context.textAlign = "center|end|left|right|start"; 默认为start
+     * context.textBaseline = "alphabetic|top|hanging|middle|ideographic|bottom";
+     *
+     * context.fillText(text, x, y, maxWidth); 填充文字
+     * @params {
+     *   text：文本内容, string
+     *   x, y：文本位置
+     *   maxWidth: 可选参数，文本最大宽度，单位px
+     * }
+     * context.strokeText(text, x, y, maxWidth); 描边文字，参数同上
+     * context.measureText(text).width; 文字宽度
+     *
+     * 阴影：
+     * context.shadowColor = '';
+     * context.shadowOffsetX = '';
+     * context.shadowOffsetY = '';
+     * context.shadowBlur = '';
+     *
+     *
+     * 全局属性：
+     * context.globalAlpha = [number]; 全局透明度，0~1.0
+     * context.globalCompositeOperation = ''; 定义如何合并图像，即如何将一个源（新的）图像绘制到目标（已有的）的图像上
+     *  |_ source-over  默认。在目标图像上显示源图像。
+     *  |_ source-atop  在目标图像顶部显示源图像。源图像位于目标图像之外的部分是不可见的。
+     *  |_ source-in 在目标图像中显示源图像。只有目标图像之内的源图像部分会显示，目标图像是透明的。
+     *  |_ source-out  在目标图像之外显示源图像。只有目标图像之外的源图像部分会显示，目标图像是透明的。
+     *  |_ destination-over  在源图像上显示目标图像。
+     *  |_ destination-atop  在源图像顶部显示目标图像。目标图像位于源图像之外的部分是不可见的。
+     *  |_ destination-in  在源图像中显示目标图像。只有源图像之内的目标图像部分会被显示，源图像是透明的。
+     *  |_ destination-out  在源图像之外显示目标图像。只有源图像之外的目标图像部分会被显示，源图像是透明的。
+     *  |_ lighter  显示源图像 + 目标图像。
+     *  |_ copy  显示源图像。忽略目标图像。
+     *  |_ xor  使用异或操作对源图像与目标图像进行组合。
+     *
+     *
+     *  context.clip(); 裁剪
+     *  裁剪是对画布的裁剪，要想保持其后的绘图的绘制区域画布大小不变，需要结合save()和restore()使用。
+     *  和我们正常的图片编辑一样，需要先用选择（矩形选择/自由图形选择）一个区域，然后才能使用裁剪功能。
+     *
+     *
+     * context.drawImage(); 绘制图像
+     * context.drawImage(img, x, y); 定位图像
+     * context.drawImage(img, x, y, width, height); 定位图像并设置宽高
+     * context.drawImage(img, sx, sy, swidth, sheight, x, y, width, height); 剪切图像，并定位被剪切部分
+     * @params {
+     *   img: 图像，画布或视频
+     *   sx, sy：可选，开始裁剪的横纵坐标
+     *   swidth, sheight：可选，被裁剪的宽高
+     *   x, y：放置图像的横纵坐标
+     *   width, height: 绘制的图像的宽高，伸展或缩小图像
+     * }
+     *
+     * context.clearRect(x, y, width, height); 橡皮擦
+     * context.isPointInPath(x, y); 如果点(x, y)位于当前路径中，返回 true，否则返回 false。
+     *
+     *
+     *
+     * canvas.toDataURL(type, encoderOptions); 返回图像URI
+     * @params {
+     *   type: 可选，图像格式，默认image/png，可选值还有image/jpeg、image/webp等
+     *   encoderOptions：有损压缩，值范围0~1，默认0.92
+     * }
+     * */
+
+    /*------------ 笔记到此结束，以下是测试代码，注释所有beginPath()代码，查看绘制覆盖效果 ------------*/
+    // 新绘制状态
+    context.beginPath();
+    context.moveTo(300, 250);
+    context.lineTo(400, 200);
+    context.lineTo(500, 250);
+    context.lineWidth = 15;
+    context.strokeStyle = "#f00";
+    context.stroke();
+    // 新绘制状态
+    context.beginPath();
+    context.moveTo(300, 300);
+    context.lineTo(400, 250);
+    context.lineTo(500, 300);
+    context.lineWidth = 9;
+    context.strokeStyle = "#0f0";
+    context.stroke();
+    // 新绘制状态
+    context.beginPath();
+    context.moveTo(300, 350);
+    context.lineTo(400, 300);
+    context.lineTo(500, 350);
+    context.lineWidth = 3;
+    context.strokeStyle = "#00f";
+    context.stroke();
+
+
+    drawRect(context, 50, 400, 200, 100);
+    drawRoundRect(context, 300, 400, 200, 100, 10);
+    drawArcByTangentLine(context, 120, 200, 250, 180, 250, 300, 50);
+    drawFlower(context);
+    drawScale(context);
+    drawTransform(context);
+    drawSetTransform(context);
+    drawText(context, grad);
+    drawTextAlign(context);
+    drawTextBaseline(context);
+    drawShadow(context);
+    drawGlobalAlpha(context);
+    drawGlobalCompositeOperation();
+    drawClip(context);
+  }
+
+  // 封装成方法，减少重复代码
+  // 绘制矩形
+  function drawRect(ctx, x, y, width, height) {
+    ctx.beginPath();
+    // ctx.moveTo(x, y);
+    // ctx.lineTo(x + width, y);
+    // ctx.lineTo(x + width, y + height);
+    // ctx.lineTo(x, y + height);
+    // ctx.closePath();
+    ctx.rect(x, y, width, height);
+    ctx.lineWidth = 3;
+    ctx.strokeStyle = '#000';
+    ctx.fillStyle = '#aaa';
+    ctx.stroke();
+    ctx.fill();
+  }
+
+  // 绘制圆角矩形
+  function drawRoundRect(ctx, x, y, width, height, radius) {
+    ctx.beginPath();
+    ctx.arc(x + radius, y + radius, radius, Math.PI, 1.5 * Math.PI);//左上角
+    ctx.lineTo(width - radius + x, y);
+    ctx.arc(width - radius + x, radius + y, radius, 1.5 * Math.PI, 2 * Math.PI);//右上角
+    ctx.lineTo(width + x, height + y - radius);
+    ctx.arc(width - radius + x, height - radius + y, radius, 0, 0.5 * Math.PI);// 右下角
+    ctx.lineTo(radius + x, height + y);
+    ctx.arc(radius + x, height - radius + y, radius, 0.5 * Math.PI, Math.PI);//左下角
+    ctx.closePath();
+    ctx.lineWidth = 3;
+    ctx.strokeStyle = '#000';
+    ctx.fillStyle = '#aaa';
+    ctx.stroke();
+    ctx.fill();
+  }
+
+  // 根据切线绘制圆弧
+  function drawArcByTangentLine(ctx, x0, y0, x1, y1, x2, y2, radius) {
+    // 圆弧所在圆
+    ctx.beginPath();
+    ctx.arc(200, 238, radius, 0, 2 * Math.PI);
+    ctx.lineWidth = 3;
+    ctx.strokeStyle = '#aaa';
+    ctx.stroke();
+    // 圆弧的两条切线
+    ctx.beginPath();
+    ctx.moveTo(x0, y0);
+    ctx.lineTo(x1, y1);
+    ctx.lineTo(x2, y2);
+    ctx.stroke();
+
+    // 圆弧
+    ctx.beginPath();
+    ctx.moveTo(x0, y0);
+    ctx.arcTo(x1, y1, x2, y2, radius);
+    ctx.lineTo(x2, y2);
+    ctx.strokeStyle = '#000';
+    ctx.stroke();
+  }
+
+  // 类似万花尺的效果
+  function drawFlower(ctx) {
+    ctx.fillText('context.translate()+context.rotate()测试效果如下：', 540, 30, 200);
+    for (var i = 1; i <= 20; i++) {
+      ctx.save();
+      ctx.translate(600, 100);
+      ctx.rotate(18 * i * Math.PI / 180);
+      ctx.fillStyle = "rgba(255, 0, 0, 0.3)";
+      ctx.fillRect(0, -50, 50, 50);
+      ctx.restore();
+    }
+  }
+
+  function drawScale(ctx) {
+    ctx.fillText('context.scale()测试效果如下：', 540, 185);
+    for (var i = 1; i < 4; i++) {
+      ctx.save();
+      ctx.translate(600, 160);
+      ctx.rotate(0.25 * Math.PI);
+      ctx.scale(i, i);
+      ctx.strokeRect(20, 20, 20, 20);
+      ctx.restore();
+    }
+  }
+
+  function drawTransform(ctx) {
+    ctx.save();
+    ctx.fillText('context.transform()测试效果如下：', 540, 345);
+    ctx.translate(550, 350);
+    ctx.fillStyle = "#ff0";
+    ctx.fillRect(0, 0, 150, 50);
+
+    ctx.transform(1, 0.5, -0.5, 1, 0, 0);
+    ctx.fillStyle = "#f00";
+    ctx.fillRect(0, 0, 150, 50);
+
+    // 在上一个矩阵基础上添加了一个新的变换矩阵，不影响红色矩形的变换矩阵
+    ctx.transform(1, 0.5, -0.5, 1, 0, 0);
+    ctx.fillStyle = "#00f";
+    ctx.fillRect(0, 0, 150, 50);
+    ctx.restore();
+  }
+
+  function drawSetTransform(ctx) {
+    ctx.save();
+    ctx.fillText('context.transform()测试效果如下：', 540, 545);
+    ctx.fillStyle = "#ff0";
+    ctx.fillRect(550, 550, 150, 50);
+
+    ctx.setTransform(1, 0.5, -0.5, 1, 550, 550);
+    ctx.fillStyle = "#f00";
+    ctx.fillRect(0, 0, 150, 50);
+
+    // 重置了前一个变换矩阵，此时红色矩形和蓝色矩形的变换矩阵一致
+    ctx.setTransform(1, 0.5, -0.5, 1, 550, 550);
+    ctx.fillStyle = "#00f";
+    ctx.fillRect(0, 0, 150, 50);
+    ctx.restore();
+  }
+
+  function drawText(ctx, grad) {
+    ctx.save();
+    ctx.fillText('默认fillText效果', 50, 520);
+    ctx.strokeText('默认strokeText效果', 50, 550);
+    ctx.font = '30px Arial';
+    ctx.fillStyle = grad;
+    ctx.strokeStyle = grad;
+    ctx.fillText('30px Arial，fillText效果', 50, 600);
+    ctx.strokeText('30px Arial，strokeText效果', 50, 650);
+    ctx.strokeText('30px Arial，strokeText效果, 设置了maxWidth->300px', 50, 690, 300);
+    ctx.restore();
+  }
+
+  function drawTextAlign(ctx) {
+    ctx.save();
+    ctx.beginPath();
+    ctx.lineWidth = 2;
+    ctx.strokeStyle = "#f00";
+    ctx.moveTo(150, 710);
+    ctx.lineTo(150, 810);
+    ctx.stroke();
+
+    ctx.textAlign = "start";
+    ctx.fillText("textAlign=start", 150, 720);
+    ctx.textAlign = "end";
+    ctx.fillText("textAlign=end", 150, 740);
+    ctx.textAlign = "left";
+    ctx.fillText("textAlign=left", 150, 760);
+    ctx.textAlign = "center";
+    ctx.fillText("textAlign=center", 150, 780);
+    ctx.textAlign = "right";
+    ctx.fillText("textAlign=right", 150, 800);
+    ctx.restore();
+  }
+
+  function drawTextBaseline(ctx) {
+    ctx.save();
+    ctx.beginPath();
+    ctx.lineWidth = 2;
+    ctx.strokeStyle = "#f00";
+    ctx.moveTo(280, 720);
+    ctx.lineTo(680, 720);
+    ctx.stroke();
+
+    ctx.textBaseline = "top";
+    ctx.fillText("Top", 300, 720);
+    ctx.textBaseline = "bottom";
+    ctx.fillText("Bottom", 380, 720);
+    ctx.textBaseline = "middle";
+    ctx.fillText("Middle", 460, 720);
+    ctx.textBaseline = "alphabetic";
+    ctx.fillText("Alphabetic", 540, 720);
+    ctx.textBaseline = "hanging";
+    ctx.fillText("Hanging", 620, 720);
+
+    var text = 'measureText().width计算文字宽度';
+    ctx.fillText('下面一行字的宽度为：' + ctx.measureText(text).width + 'px', 280, 760);
+    ctx.fillText(text, 280, 780);
+    ctx.restore();
+  }
+
+  function drawShadow(ctx) {
+    ctx.save();
+    ctx.beginPath();
+    ctx.fillText("shadow阴影效果：", 50, 825);
+    ctx.shadowColor = '#000';
+    ctx.shadowOffsetX = 15;
+    ctx.shadowOffsetY = 10;
+    ctx.shadowBlur = 5;
+    ctx.fillStyle = '#f00';
+    ctx.fillRect(50, 830, 100, 50);
+    ctx.restore();
+  }
+
+  function drawGlobalAlpha(ctx) {
+    ctx.save();
+    ctx.fillText("globalAlpha效果：", 200, 825);
+    ctx.globalAlpha = 0.5;
+    for (var i = 0; i <= 50; i++) {
+      var R = Math.floor(Math.random() * 255);
+      var G = Math.floor(Math.random() * 255);
+      var B = Math.floor(Math.random() * 255);
+
+      ctx.save();
+      ctx.beginPath();
+      ctx.fillStyle = "rgb(" + R + "," + G + "," + B + ")";
+      ctx.translate(200, 830);
+      ctx.arc(Math.random() * 500, Math.random() * 50, Math.random() * 15, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+    }
+    ctx.restore();
+  }
+
+  function drawGlobalCompositeOperation() {
+    var gco = new Array();
+    gco.push("source-atop");
+    gco.push("source-in");
+    gco.push("source-out");
+    gco.push("source-over");
+    gco.push("destination-atop");
+    gco.push("destination-in");
+    gco.push("destination-out");
+    gco.push("destination-over");
+    gco.push("lighter");
+    gco.push("copy");
+    gco.push("xor");
+    for (var n = 0; n < gco.length; n++) {
+      var newElement = document.createElement('div');
+      newElement.innerHTML = "<div id='p_" + n + "' style='float:left;'>" + gco[n] + ":<br></div>";
+      document.getElementById('globalCompositeOperation').appendChild(newElement);
+      var c = document.createElement("canvas");
+      c.width = 120;
+      c.height = 100;
+      document.getElementById("p_" + n).appendChild(c);
+      var ctx = c.getContext("2d");
+      ctx.fillStyle = "#00f";
+      ctx.fillRect(10, 10, 50, 50);
+      ctx.globalCompositeOperation = gco[n];
+      ctx.beginPath();
+      ctx.fillStyle = "#f00";
+      ctx.arc(50, 50, 30, 0, 2 * Math.PI);
+      ctx.fill();
+    }
+  }
+
+  function drawClip(ctx) {
+    ctx.save();
+    ctx.beginPath();
+    ctx.fillText("没有裁剪clip()效果：", 50, 910);
+    ctx.rect(50, 920, 200, 100);
+    ctx.stroke();
+    ctx.fillStyle = "#f00";
+    ctx.fillRect(0, 920, 150, 50);
+    ctx.restore();
+
+    ctx.save();
+    ctx.fillText("有裁剪clip()效果：", 50, 1055);
+    ctx.rect(50, 1060, 200, 100);
+    ctx.stroke();
+    ctx.clip();
+    ctx.fillStyle = "#f00";
+    ctx.fillRect(0, 1060, 150, 50);
+    ctx.restore();
+  }
+</script>
+</body>
+</html>

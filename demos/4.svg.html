@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>svg实现完整/不完整圆环进度条</title>
+  <!--
+  svg属性参考文档：https://developer.mozilla.org/zh-CN/docs/Web/SVG/Tutorial/Fills_and_Strokes
+  fill：设置对象内部的颜色；
+  stroke：设置绘制对象的线条的颜色；
+  stroke-width：设置绘制对象的线条的宽度；
+  stroke-linecap：设置绘制对象的线条终点的形状：
+    butt用直边结束线段，它是常规做法，线段边界90度垂直于描边的方向、贯穿它的终点；
+    square和butt的效果差不多，但是会稍微超出实际路径的范围，超出的大小由stroke-width控制；
+    round表示边框的终点是圆角，圆角的半径也是由stroke-width控制的。
+  stroke-linejoin：控制连接处的样式：
+    miter是默认值，表示用方形画笔在连接处形成尖角，
+    round表示用圆角连接，实现平滑效果。
+    bevel连接处会形成一个斜接。
+  stroke-dasharray：指定短划线和缺口的长度，如果提供了奇数个值，则这个值的数列重复一次，从而变成偶数个值
+  stroke-dashoffset：指定短划线距起点的长度
+  部分svg属性可以用样式设置
+  -->
+  <style>
+    .circle-progress-bar {
+      width: 190px;
+      height: 190px;
+      margin: 45px auto;
+    }
+    .circle-progress-bar-text {
+      text-align: center;
+      margin-top: -60%;
+    }
+    .circle-progress-bar-point {
+      font-size: 30px;
+    }
+    .circle-svg {
+      transform: translateX(109px) rotate(-230deg) translateY(-109px);
+    }
+    .circle-svg-bottom,
+    .circle-svg-top {
+      stroke-dasharray: 471.23889803846896; /*圆环周长*/
+      transition: stroke-dashoffset 1200ms cubic-bezier(.99, .01, .62, .94);
+    }
+    .circle-svg-bottom {
+      stroke-dashoffset: 105; /*缺口弧长*/
+    }
+    .circle-svg-top {
+      stroke-dashoffset: 471.23889803846896; /*圆环周长*/
+    }
+  </style>
+</head>
+<body>
+<div class="circle-progress-bar">
+  <svg width="100%" height="100%" viewBox="0 0 160 160">
+    <g class="circle-svg">
+      <circle class="circle-svg-bottom" r="75" cy="80" cx="80" fill="none" stroke-width="9" stroke="#F3F6F7" stroke-linejoin="round" stroke-linecap="round" />
+      <circle class="circle-svg-top" r="75" cy="80" cx="80" fill="none" stroke-width="9" stroke="#7E46AA" stroke-linejoin="round" stroke-linecap="round" id="progressCircle" />
+    </g>
+  </svg>
+  <div class="circle-progress-bar-text">
+    <div class="circle-progress-bar-point" id="progressVal">0</div>
+    <div>Points</div>
+  </div>
+</div>
+<script>
+  window.onload = function () {
+    var point = 66,        // 当前进度
+      radius = 75,         // 圆环半径
+      limitProgress = 100, // 总额进度
+      missingCircle = 105; // 缺口弧长
+    var calcDashOffset = function () {
+      if (point > limitProgress) {
+        return missingCircle;   // 若当前进度超过总额进度，则显示缺口弧长
+      } else {
+        var circumference = Math.PI * (2 * radius);   // 圆环周长
+        return circumference - (point / limitProgress) * (circumference - missingCircle);   // 计算当前进度占总额进度的弧长
+      }
+    };
+    var createCSS = function () {
+      document.getElementById('progressCircle').style.strokeDashoffset = calcDashOffset();
+    };
+    var updateText = function () {
+      document.getElementById('progressVal').innerText = point;
+    };
+    setTimeout(function () {
+      createCSS();
+      updateText();
+    }, 300);
+  }
+</script>
+</body>
+</html>
