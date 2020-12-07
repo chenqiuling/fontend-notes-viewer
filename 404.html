@@ -1,13 +1,22 @@
 <!DOCTYPE html>
 <html>
-  <head>
+<head>
     <meta charset="utf-8">
     <title>我的前端笔记</title>
     <script type="text/javascript">
-      location.replace(location.protocol + "//" + location.host + '?pathname=' + location.pathname)
-      location.replace(location.origin + location.search.replace('?pathname=', ''))
+        function find(str, query, index) {
+            var x = str.indexOf(query);
+            for (var i = 0; i < index; i++) {
+                x = str.indexOf(query, x + 1);
+            }
+            return x;
+        }
+
+        var rootPathname = location.pathname.substring(0, find(location.pathname, '/', 1))
+        location.replace(location.protocol + "//" + location.host + rootPathname + '?pathname=' + location.pathname)
+        // location.replace(location.origin + decodeURIComponent(location.search).replace('?pathname=', ''))
     </script>
-  </head>
-  <body>
-  </body>
+</head>
+<body>
+</body>
 </html>
