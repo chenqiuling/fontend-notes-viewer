@@ -18,6 +18,11 @@
   <body>
     <div id="root"></div>
 
+    <script>
+      var baseEle = document.createElement("base");
+      baseEle.setAttribute("target", "_blank");
+      document.getElementsByTagName("head")[0].append(baseEle);
+    </script>
     <script src="/fontend-notes-viewer/umi.js"></script>
   </body>
 </html>
